@@ -2,13 +2,41 @@
 #include <string>
 #include <vector>
 #include "gol.h"
+#include "Timing.h"
 
 
 int main(int argc, char* argv[])
 {
+   Timing* timing = Timing::getInstance();
    gol game(argc, argv);
+   if(game.getMeasure())
+       timing->startSetup();
+
    game.setup();
-   return 0;// move(sources, destination);
+
+    if(game.getMeasure())
+        timing->stopSetup();
+
+    if(game.getMeasure())
+        timing->startComputation();
+
+    if(game.getMeasure())
+        timing->stopComputation();
+
+    if(game.getMeasure())
+        timing->startFinalization();
+
+    game.saveBoard();
+
+    if(game.getMeasure())
+        timing->stopFinalization();
+
+    if(game.getMeasure()) {
+        std::string output = timing->getResults();
+        std::cout << output<< std::endl;
+    }
+
+   return 0;
 }
 
 

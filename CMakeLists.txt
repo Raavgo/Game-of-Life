@@ -3,4 +3,4 @@ project(gol)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(gol main.cpp gol.cpp gol.h)
+add_executable(gol main.cpp gol.cpp gol.h Timing.cpp Timing.h)

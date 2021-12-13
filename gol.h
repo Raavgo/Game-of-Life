@@ -1,5 +1,5 @@
 //
-// Created by alexa on 12.12.2021.
+// Created by Alexander Dickbauer on 12.12.2021.
 //
 #include <iostream>
 #include <string>
@@ -13,8 +13,8 @@
 
 class gol {
     private:
-        std::string destination;
-        std::string source;
+        std::string load;
+        std::string save;
         int32_t generations = 1;
         bool measure = false;
         static void show_usage(std::string name);
@@ -24,17 +24,18 @@ class gol {
         std::ifstream  infile;
         std::fstream  outfile;
         std::vector<std::vector<char>> board;
-        void buildBoard();
+        void loadBoard();
 
     public:
         gol(int argc, char **argv);
         void setup();
         void computation();
         void finalization();
-        std::string getDestination();
-        std::string getSource();
         int32_t getGenerations();
         bool getMeasure();
+        void saveBoard();
+
+
 };
 
 

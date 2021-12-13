@@ -17,7 +17,7 @@ gol::gol(int argc, char **argv) {
             return_flag = 1;
         } else if ((arg == "-l") || (arg == "--load")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                destination = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
+                load = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
                 infile.open(argv[i+1], std::ios::in);// = fopen(argv[i+1], "r");
                 if (!infile) {
                     std::cerr << "No file found" << std::endl;
@@ -29,7 +29,7 @@ gol::gol(int argc, char **argv) {
             }
         } else if ((arg == "-s") || (arg == "--save")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                source = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
+                save = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
             } else { // Uh-oh, there was no argument to the destination option.
                 std::cerr << "--destination option requires one argument." << std::endl;
                 return_flag = 1;
@@ -45,24 +45,14 @@ gol::gol(int argc, char **argv) {
             measure = true;
         }
     }
-    std::cout << destination << "\n"
-              << source << "\n"
+    std::cout << load << "\n"
+              << save << "\n"
               << generations << "\n"
               << measure << std:: endl;
 }
 
 void gol::setup(){
-    std::string str;
-    int i = 0;
-    while (std::getline(infile, str)) {
-        if(i == 0) { // Do Vector stuff
-            std::cout << str << std::endl;
-            i++;
-            continue;
-        }
-        std::vector<char> v(str.begin(), str.end());
-        board.push_back(v);
-    }
+    loadBoard();
 }
 
 void gol::computation() {
@@ -70,7 +60,7 @@ void gol::computation() {
 }
 
 void gol::finalization() {
-
+    saveBoard();
 }
 
 
@@ -86,13 +76,21 @@ void gol::show_usage(std::string name)
               << std::endl;
 }
 
-std::string gol::getDestination() {
-    return destination;
+void gol::saveBoard(){
+    std::cout << "Saving at "<< save << std::endl;
+    outfile.open(save, std::ios::out);
+    outfile << board.size() << "," << board[0].size() << std::endl;
+    for (unsigned int i = 0; i < board.size(); ++i)
+    {
+        for (unsigned int j = 0; j < board[i].size(); ++j)
+        {
+            outfile << board[i][j];
+        }
+        outfile << std::endl;
+    }
+    outfile.close();
 }
 
-std::string gol::getSource() {
-    return source;
-}
 
 int32_t gol::getGenerations() {
     return generations;
@@ -102,7 +100,17 @@ bool gol::getMeasure() {
     return measure;
 }
 
-void gol::buildBoard() {
-
+void gol::loadBoard() {
+    std::string str;
+    int i = 0;
+    while (std::getline(infile, str)) {
+        if(i == 0) { //Skip first line
+            i = 1;
+            continue;
+        }
+        std::vector<char> v(str.begin(), str.end());
+        board.push_back(v);
+    }
+    infile.close();
 }
 
