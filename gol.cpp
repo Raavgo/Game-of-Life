@@ -164,101 +164,101 @@ int32_t gol::getAliveNeighbours(int m, int n) {
         neighbours[7] = board[m - 1][n + 1] == 'x';
     }else
 
-        //Special case m = 0 / n> 0 && n<width Top Row
-        if(m == 0 && n> 0 && n<width){
-            neighbours[0] = board[m][n + 1] == 'x';
-            neighbours[1] = board[m + 1][n + 1] == 'x';
-            neighbours[2] = board[m + 1][n] == 'x';
-            neighbours[3] = board[m + 1][n - 1] == 'x';
-            neighbours[4] = board[m][n - 1] == 'x';
-            neighbours[5] = board[height][n - 1] == 'x';
-            neighbours[6] = board[height][n] == 'x';
-            neighbours[7] = board[height][n + 1] == 'x';
-        }else
+    //Special case m = 0 / n> 0 && n<width Top Row
+    if(m == 0 && n> 0 && n<width){
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[m + 1][n + 1] == 'x';
+        neighbours[2] = board[m + 1][n] == 'x';
+        neighbours[3] = board[m + 1][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[height][n - 1] == 'x';
+        neighbours[6] = board[height][n] == 'x';
+        neighbours[7] = board[height][n + 1] == 'x';
+    }else
 
-            //Special case m = height / n> 0 && n<width Bottom Row
-            if(m == height && n> 0 && n<width){
-                neighbours[0] = board[m][n + 1] == 'x';
-                neighbours[1] = board[0][n + 1] == 'x';
-                neighbours[2] = board[0][n] == 'x';
-                neighbours[3] = board[0][n - 1] == 'x';
-                neighbours[4] = board[m][n - 1] == 'x';
-                neighbours[5] = board[m - 1][n - 1] == 'x';
-                neighbours[6] = board[m - 1][n] == 'x';
-                neighbours[7] = board[m - 1][n + 1] == 'x';
-            }else
+    //Special case m = height / n> 0 && n<width Bottom Row
+    if(m == height && n> 0 && n<width){
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[0][n + 1] == 'x';
+        neighbours[2] = board[0][n] == 'x';
+        neighbours[3] = board[0][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[m - 1][n - 1] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][n + 1] == 'x';
+    }else
 
-                //Special case m = m > 0 && m< height / n == 0 left Row
-                if(m > 0 && m< height && n == 0){
-                    neighbours[0] = board[m][n + 1] == 'x';
-                    neighbours[1] = board[m + 1][n + 1] == 'x';
-                    neighbours[2] = board[m + 1][n] == 'x';
-                    neighbours[3] = board[m + 1][width] == 'x';
-                    neighbours[4] = board[m][width] == 'x';
-                    neighbours[5] = board[m - 1][width] == 'x';
-                    neighbours[6] = board[m - 1][n] == 'x';
-                    neighbours[7] = board[m - 1][n + 1] == 'x';
-                }else
+    //Special case m = m > 0 && m< height / n == 0 left Row
+    if(m > 0 && m< height && n == 0){
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[m + 1][n + 1] == 'x';
+        neighbours[2] = board[m + 1][n] == 'x';
+        neighbours[3] = board[m + 1][width] == 'x';
+        neighbours[4] = board[m][width] == 'x';
+        neighbours[5] = board[m - 1][width] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][n + 1] == 'x';
+    }else
 
-                    //Special case m = m > 0 && m< height / n == width right Row
-                    if(m > 0 && m< height && n == width){
-                        neighbours[0] = board[m][0] == 'x';
-                        neighbours[1] = board[m + 1][0] == 'x';
-                        neighbours[2] = board[m + 1][n] == 'x';
-                        neighbours[3] = board[m + 1][n - 1] == 'x';
-                        neighbours[4] = board[m][n - 1] == 'x';
-                        neighbours[5] = board[m - 1][n - 1] == 'x';
-                        neighbours[6] = board[m - 1][n] == 'x';
-                        neighbours[7] = board[m - 1][0] == 'x';
-                    }
+    //Special case m = m > 0 && m< height / n == width right Row
+    if(m > 0 && m< height && n == width){
+        neighbours[0] = board[m][0] == 'x';
+        neighbours[1] = board[m + 1][0] == 'x';
+        neighbours[2] = board[m + 1][n] == 'x';
+        neighbours[3] = board[m + 1][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[m - 1][n - 1] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][0] == 'x';
+    }else
 
-                        //Super special case 0/0
-                        if(m == 0 && n == 0){
-                            neighbours[0] = board[m][n + 1] == 'x';
-                            neighbours[1] = board[m+1][n + 1] == 'x';
-                            neighbours[2] = board[m+1][n] == 'x';
-                            neighbours[3] = board[m+1][width] == 'x';
-                            neighbours[4] = board[m][width] == 'x';
-                            neighbours[5] = board[height][width] == 'x';
-                            neighbours[6] = board[height][n] == 'x';
-                            neighbours[7] = board[height][n + 1] == 'x';
-                        }else
+    //Super special case 0/0
+    if(m == 0 && n == 0){
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[m+1][n + 1] == 'x';
+        neighbours[2] = board[m+1][n] == 'x';
+        neighbours[3] = board[m+1][width] == 'x';
+        neighbours[4] = board[m][width] == 'x';
+        neighbours[5] = board[height][width] == 'x';
+        neighbours[6] = board[height][n] == 'x';
+        neighbours[7] = board[height][n + 1] == 'x';
+    }else
 
-                            //Super special case 0/n
-                            if(m == 0 && n == width){
-                                neighbours[0] = board[m][0] == 'x';
-                                neighbours[1] = board[m + 1][0] == 'x';
-                                neighbours[2] = board[m + 1][n] == 'x';
-                                neighbours[3] = board[m + 1][n - 1] == 'x';
-                                neighbours[4] = board[m][n - 1] == 'x';
-                                neighbours[5] = board[height][n - 1] == 'x';
-                                neighbours[6] = board[height][n] == 'x';
-                                neighbours[7] = board[height][0] == 'x';
-                            }else
+    //Super special case 0/n
+    if(m == 0 && n == width){
+        neighbours[0] = board[m][0] == 'x';
+        neighbours[1] = board[m + 1][0] == 'x';
+        neighbours[2] = board[m + 1][n] == 'x';
+        neighbours[3] = board[m + 1][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[height][n - 1] == 'x';
+        neighbours[6] = board[height][n] == 'x';
+        neighbours[7] = board[height][0] == 'x';
+    }else
 
-                                //Super special case left lower corner m/0
-                                if(m == height && n == 0){
-                                    neighbours[0] = board[m][n + 1] == 'x';
-                                    neighbours[1] = board[0][n + 1] == 'x';
-                                    neighbours[2] = board[0][n] == 'x';
-                                    neighbours[3] = board[0][width] == 'x';
-                                    neighbours[4] = board[m][width] == 'x';
-                                    neighbours[5] = board[m - 1][width] == 'x';
-                                    neighbours[6] = board[m - 1][n] == 'x';
-                                    neighbours[7] = board[m - 1][n + 1] == 'x';
-                                }else
+    //Super special case left lower corner m/0
+    if(m == height && n == 0){
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[0][n + 1] == 'x';
+        neighbours[2] = board[0][n] == 'x';
+        neighbours[3] = board[0][width] == 'x';
+        neighbours[4] = board[m][width] == 'x';
+        neighbours[5] = board[m - 1][width] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][n + 1] == 'x';
+    }else
 
-                                    //Super special case right lower corner m/n
-                                    if(m == height && n == width){
-                                        neighbours[0] = board[m][0] == 'x';
-                                        neighbours[1] = board[0][0] == 'x';
-                                        neighbours[2] = board[0][n] == 'x';
-                                        neighbours[3] = board[0][n - 1] == 'x';
-                                        neighbours[4] = board[m][n - 1] == 'x';
-                                        neighbours[5] = board[m - 1][n - 1] == 'x';
-                                        neighbours[6] = board[m - 1][n] == 'x';
-                                        neighbours[7] = board[m - 1][0] == 'x';
-                                    }
+    //Super special case right lower corner m/n
+    if(m == height && n == width){
+        neighbours[0] = board[m][0] == 'x';
+        neighbours[1] = board[0][0] == 'x';
+        neighbours[2] = board[0][n] == 'x';
+        neighbours[3] = board[0][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[m - 1][n - 1] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][0] == 'x';
+    }
 
     for (bool neighbour : neighbours){
         if(neighbour)
