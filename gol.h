@@ -17,14 +17,15 @@ class gol {
         std::string save;
         int32_t generations = 1;
         bool measure = false;
-        static void show_usage(std::string name);
+        static void show_usage(const std::string& name);
         int32_t return_flag = 0;
-        int32_t witdh;
-        int32_t height;
+        size_t width{};
+        size_t height{};
         std::ifstream  infile;
         std::fstream  outfile;
         std::vector<std::vector<char>> board;
         void loadBoard();
+        int32_t getAliveNeighbours(int m, int n);
 
     public:
         gol(int argc, char **argv);
@@ -32,10 +33,9 @@ class gol {
         void computation();
         void finalization();
         int32_t getGenerations();
-        bool getMeasure();
+        bool getMeasure() const;
         void saveBoard();
-
-
+        int getReturnFlag() const;
 };
 
 

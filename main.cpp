@@ -9,6 +9,10 @@ int main(int argc, char* argv[])
 {
    Timing* timing = Timing::getInstance();
    gol game(argc, argv);
+
+   if(game.getReturnFlag() != 0)
+       return 1;
+
    if(game.getMeasure())
        timing->startSetup();
 
