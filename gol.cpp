@@ -116,7 +116,6 @@ void gol::computation() {
 }
 
 void gol::finalization() {
-    std::cout << "Saving at "<< save << std::endl;
     outfile.open(save, std::ios::out);
     outfile << board.size() << "," << board[0].size() << std::endl;
     for (auto & i : board)
