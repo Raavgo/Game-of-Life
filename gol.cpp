@@ -16,7 +16,6 @@ gol::gol(int argc, char **argv) {
             return_flag = 1;
         } else if ((arg == "-l") || (arg == "--load")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                load = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
                 infile.open(argv[i+1], std::ios::in);
                 if (!infile) {
                     std::cerr << "No file found" << std::endl;
@@ -28,14 +27,14 @@ gol::gol(int argc, char **argv) {
             }
         } else if ((arg == "-s") || (arg == "--save")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                save = argv[i+1]; // Increment 'i' so we don't get the argument as the next argv[i].
+                save = argv[i+1];
             } else { // Uh-oh, there was no argument to the destination option.
                 std::cerr << "--destination option requires one argument." << std::endl;
                 return_flag = 1;
             }
         }else if ((arg == "-g") || (arg == "--generations")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                generations =  atoi(argv[i+1]); // Increment 'i' so we don't get the argument as the next argv[i].
+                generations =  atoi(argv[i+1]);
             } else { // Uh-oh, there was no argument to the destination option.
                 std::cerr << "--destination option requires one argument." << std::endl;
                 return_flag = 1;
@@ -44,14 +43,23 @@ gol::gol(int argc, char **argv) {
             measure = true;
         }
     }
-    std::cout << load << "\n"
-              << save << "\n"
-              << generations << "\n"
-              << measure << std:: endl;
 }
 
 void gol::setup(){
-    loadBoard();
+    std::string str;
+    int i = 0;
+    while (std::getline(infile, str)) {
+        if(i == 0) { //Skip first line
+            i = 1;
+            continue;
+        }
+        std::vector<char> v(str.begin(), str.end());
+        board.push_back(v);
+    }
+    infile.close();
+
+    height = board.size() - 1;
+    width = board[0].size() - 1;
 }
 
 void gol::computation() {
@@ -108,23 +116,6 @@ void gol::computation() {
 }
 
 void gol::finalization() {
-    saveBoard();
-}
-
-
-void gol::show_usage(const std::string& name)
-{
-    std::cerr << "Usage: " << name
-              << "Options:\n"
-              << "\t-h,--help\t\tShow this help message\n"
-              << "\t-l, --load FilePath\tSpecify the source path\n"
-              << "\t-s, --save FilePath\tSpecify the destination path\n"
-              << "\t-g, --generations Integer\tSpecify the generations for game of life (optional, default = 1)\n"
-              << "\t-m, --measure\tSpecify if execution should be timed (optional, default=false)\n"
-              << std::endl;
-}
-
-void gol::saveBoard(){
     std::cout << "Saving at "<< save << std::endl;
     outfile.open(save, std::ios::out);
     outfile << board.size() << "," << board[0].size() << std::endl;
@@ -139,143 +130,141 @@ void gol::saveBoard(){
     outfile.close();
 }
 
-bool gol::getMeasure() const {
-    return measure;
+void gol::show_usage(const std::string& name)
+{
+    std::cerr << "Usage: " << name
+              << "Options:\n"
+              << "\t-h,--help\t\tShow this help message\n"
+              << "\t-l, --load FilePath\tSpecify the source path\n"
+              << "\t-s, --save FilePath\tSpecify the destination path\n"
+              << "\t-g, --generations Integer\tSpecify the generations for game of life (optional, default = 1)\n"
+              << "\t-m, --measure\tSpecify if execution should be timed (optional, default=false)\n"
+              << std::endl;
 }
 
-void gol::loadBoard() {
-    std::string str;
-    int i = 0;
-    while (std::getline(infile, str)) {
-        if(i == 0) { //Skip first line
-            i = 1;
-            continue;
-        }
-        std::vector<char> v(str.begin(), str.end());
-        board.push_back(v);
-    }
-    infile.close();
-
-    height = board.size();
-    width = board[0].size();
+bool gol::getMeasure() const {
+    return measure;
 }
 
 int gol::getReturnFlag() const {
     return return_flag;
 }
-
+//Count alive neighbours, if the cell is at a border wrap around
 int32_t gol::getAliveNeighbours(int m, int n) {
-
-    std::vector<bool> results;
-
+    int result = 0;
     //Neigbours most of the time
-    if(m > 0 && m< height && n> 0 && n<width) {
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
+    if(m > 0 && m < height && n> 0 && n < width) {
+        neighbours[0] = board[m][n + 1] == 'x';
+        neighbours[1] = board[m + 1][n + 1] == 'x';
+        neighbours[2] = board[m + 1][n] == 'x';
+        neighbours[3] = board[m + 1][n - 1] == 'x';
+        neighbours[4] = board[m][n - 1] == 'x';
+        neighbours[5] = board[m - 1][n - 1] == 'x';
+        neighbours[6] = board[m - 1][n] == 'x';
+        neighbours[7] = board[m - 1][n + 1] == 'x';
+    }else
+
+        //Special case m = 0 / n> 0 && n<width Top Row
+        if(m == 0 && n> 0 && n<width){
+            neighbours[0] = board[m][n + 1] == 'x';
+            neighbours[1] = board[m + 1][n + 1] == 'x';
+            neighbours[2] = board[m + 1][n] == 'x';
+            neighbours[3] = board[m + 1][n - 1] == 'x';
+            neighbours[4] = board[m][n - 1] == 'x';
+            neighbours[5] = board[height][n - 1] == 'x';
+            neighbours[6] = board[height][n] == 'x';
+            neighbours[7] = board[height][n + 1] == 'x';
+        }else
+
+            //Special case m = height / n> 0 && n<width Bottom Row
+            if(m == height && n> 0 && n<width){
+                neighbours[0] = board[m][n + 1] == 'x';
+                neighbours[1] = board[0][n + 1] == 'x';
+                neighbours[2] = board[0][n] == 'x';
+                neighbours[3] = board[0][n - 1] == 'x';
+                neighbours[4] = board[m][n - 1] == 'x';
+                neighbours[5] = board[m - 1][n - 1] == 'x';
+                neighbours[6] = board[m - 1][n] == 'x';
+                neighbours[7] = board[m - 1][n + 1] == 'x';
+            }else
+
+                //Special case m = m > 0 && m< height / n == 0 left Row
+                if(m > 0 && m< height && n == 0){
+                    neighbours[0] = board[m][n + 1] == 'x';
+                    neighbours[1] = board[m + 1][n + 1] == 'x';
+                    neighbours[2] = board[m + 1][n] == 'x';
+                    neighbours[3] = board[m + 1][width] == 'x';
+                    neighbours[4] = board[m][width] == 'x';
+                    neighbours[5] = board[m - 1][width] == 'x';
+                    neighbours[6] = board[m - 1][n] == 'x';
+                    neighbours[7] = board[m - 1][n + 1] == 'x';
+                }else
+
+                    //Special case m = m > 0 && m< height / n == width right Row
+                    if(m > 0 && m< height && n == width){
+                        neighbours[0] = board[m][0] == 'x';
+                        neighbours[1] = board[m + 1][0] == 'x';
+                        neighbours[2] = board[m + 1][n] == 'x';
+                        neighbours[3] = board[m + 1][n - 1] == 'x';
+                        neighbours[4] = board[m][n - 1] == 'x';
+                        neighbours[5] = board[m - 1][n - 1] == 'x';
+                        neighbours[6] = board[m - 1][n] == 'x';
+                        neighbours[7] = board[m - 1][0] == 'x';
+                    }
+
+                        //Super special case 0/0
+                        if(m == 0 && n == 0){
+                            neighbours[0] = board[m][n + 1] == 'x';
+                            neighbours[1] = board[m+1][n + 1] == 'x';
+                            neighbours[2] = board[m+1][n] == 'x';
+                            neighbours[3] = board[m+1][width] == 'x';
+                            neighbours[4] = board[m][width] == 'x';
+                            neighbours[5] = board[height][width] == 'x';
+                            neighbours[6] = board[height][n] == 'x';
+                            neighbours[7] = board[height][n + 1] == 'x';
+                        }else
+
+                            //Super special case 0/n
+                            if(m == 0 && n == width){
+                                neighbours[0] = board[m][0] == 'x';
+                                neighbours[1] = board[m + 1][0] == 'x';
+                                neighbours[2] = board[m + 1][n] == 'x';
+                                neighbours[3] = board[m + 1][n - 1] == 'x';
+                                neighbours[4] = board[m][n - 1] == 'x';
+                                neighbours[5] = board[height][n - 1] == 'x';
+                                neighbours[6] = board[height][n] == 'x';
+                                neighbours[7] = board[height][0] == 'x';
+                            }else
+
+                                //Super special case left lower corner m/0
+                                if(m == height && n == 0){
+                                    neighbours[0] = board[m][n + 1] == 'x';
+                                    neighbours[1] = board[0][n + 1] == 'x';
+                                    neighbours[2] = board[0][n] == 'x';
+                                    neighbours[3] = board[0][width] == 'x';
+                                    neighbours[4] = board[m][width] == 'x';
+                                    neighbours[5] = board[m - 1][width] == 'x';
+                                    neighbours[6] = board[m - 1][n] == 'x';
+                                    neighbours[7] = board[m - 1][n + 1] == 'x';
+                                }else
+
+                                    //Super special case right lower corner m/n
+                                    if(m == height && n == width){
+                                        neighbours[0] = board[m][0] == 'x';
+                                        neighbours[1] = board[0][0] == 'x';
+                                        neighbours[2] = board[0][n] == 'x';
+                                        neighbours[3] = board[0][n - 1] == 'x';
+                                        neighbours[4] = board[m][n - 1] == 'x';
+                                        neighbours[5] = board[m - 1][n - 1] == 'x';
+                                        neighbours[6] = board[m - 1][n] == 'x';
+                                        neighbours[7] = board[m - 1][0] == 'x';
+                                    }
+
+    for (bool neighbour : neighbours){
+        if(neighbour)
+            result++;
     }
 
-    //Special case m = 0 / n> 0 && n<width Top Row <-- Todo
-    if(m == 0 && n> 0 && n<width){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Special case m = height / n> 0 && n<width Bottom Row <-- Todo
-    if(m == height && n> 0 && n<width){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Special case m = m > 0 && m< height / n == 0 left Row <-- Todo
-    if(m > 0 && m< height && n == 0){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Special case m = m > 0 && m< height / n == width left Row <-- Todo
-    if(m > 0 && m< height && n == width){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Super special case 0/0
-    if(m == 0 && n == 0){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[height][n + 1] == 'x');
-        results.push_back(board[height][n] == 'x');
-        results.push_back(board[height][width] == 'x');
-        results.push_back(board[m][width] == 'x');
-        results.push_back(board[m - 1][width] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-    //Super special case 0/n <-- TODO
-    if(m == 0 && n == width){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Super special case m/0 <-- TODO
-    if(m == height && n == 0){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-    //Super special case m/n <-- TODO
-    if(m == height && n == width){
-        results.push_back(board[m][n + 1] == 'x');
-        results.push_back(board[m + 1][n + 1] == 'x');
-        results.push_back(board[m + 1][n] == 'x');
-        results.push_back(board[m + 1][n - 1] == 'x');
-        results.push_back(board[m][n - 1] == 'x');
-        results.push_back(board[m - 1][n - 1] == 'x');
-        results.push_back(board[m - 1][n] == 'x');
-        results.push_back(board[m - 1][n + 1] == 'x');
-    }
-
-
-    return std::count(results.begin(), results.end(), true);
+    return result;
 }
 

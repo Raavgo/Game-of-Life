@@ -13,29 +13,31 @@
 
 class gol {
     private:
-        std::string load;
+        //Internal variables needed to compute the gol logic
+        bool neighbours[8];
         std::string save;
         int32_t generations = 1;
         bool measure = false;
-        static void show_usage(const std::string& name);
         int32_t return_flag = 0;
         size_t width{};
         size_t height{};
-        std::ifstream  infile;
-        std::fstream  outfile;
+        std::ifstream infile;
+        std::fstream outfile;
         std::vector<std::vector<char>> board;
-        void loadBoard();
+
+        //Privat functions
+        static void show_usage(const std::string& name);
         int32_t getAliveNeighbours(int m, int n);
 
     public:
+        //Public functions needed for the main loop
         gol(int argc, char **argv);
         void setup();
         void computation();
         void finalization();
-        int32_t getGenerations();
-        bool getMeasure() const;
-        void saveBoard();
-        int getReturnFlag() const;
+
+        [[nodiscard]] bool getMeasure() const;
+        [[nodiscard]] int getReturnFlag() const;
 };
 
 
