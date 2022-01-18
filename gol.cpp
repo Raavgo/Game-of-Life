@@ -4,6 +4,38 @@
 
 #include "gol.h"
 #include <fstream>
+#include <omp.h>
+#include <vector>
+#include <string>
+#include <sstream>
+
+int toInt(std::string s){
+    int i;
+    std::stringstream in_s(s);
+    in_s >> i;
+
+    return i;
+}
+std::vector<std::string> SplitString(
+        std::string str,
+        std::string delimeter)
+{
+    std::vector<std::string> splittedStrings = {};
+    size_t pos = 0;
+
+    while ((pos = str.find(delimeter)) != std::string::npos)
+    {
+        std::string token = str.substr(0, pos);
+        if (token.length() > 0)
+            splittedStrings.push_back(token);
+        str.erase(0, pos + delimeter.length());
+    }
+
+    if (str.length() > 0)
+        splittedStrings.push_back(str);
+    return splittedStrings;
+}
+
 gol::gol(int argc, char **argv) {
     if (argc < 4) {
         show_usage(argv[0]);
@@ -22,44 +54,50 @@ gol::gol(int argc, char **argv) {
                     return_flag = 1;
                 }
             } else { // Uh-oh, there was no argument to the destination option.
-                std::cerr << "--destination option requires one argument." << std::endl;
+                std::cerr << "--load option requires one argument." << std::endl;
                 return_flag = 1;
             }
         } else if ((arg == "-s") || (arg == "--save")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
                 save = argv[i+1];
             } else { // Uh-oh, there was no argument to the destination option.
-                std::cerr << "--destination option requires one argument." << std::endl;
+                std::cerr << "--save option requires one argument." << std::endl;
                 return_flag = 1;
             }
         }else if ((arg == "-g") || (arg == "--generations")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
                 generations =  atoi(argv[i+1]);
             } else { // Uh-oh, there was no argument to the destination option.
-                std::cerr << "--destination option requires one argument." << std::endl;
+                std::cerr << "--generations option requires one argument." << std::endl;
                 return_flag = 1;
             }
         }else if ((arg == "-m") || (arg == "--measure")) {
             measure = true;
+        }else if ((arg == "-t") || (arg == "--threads")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                threads =  atoi(argv[i+1]);
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "--destination option requires one argument." << std::endl;
+                return_flag = 1;
+            }
         }
     }
 }
 
 void gol::setup(){
     std::string str;
-    int i = 0;
+    int i = -1;
     while (std::getline(infile, str)) {
-        if(i == 0) { //Skip first line
-            i = 1;
+        if(i == -1) { //Skip first line
+            i = 0;
+            width = toInt(SplitString(str, ",")[0]);
+            height = toInt(SplitString(str, ",")[1]);
             continue;
         }
         std::vector<char> v(str.begin(), str.end());
         board.push_back(v);
     }
     infile.close();
-
-    height = board.size() - 1;
-    width = board[0].size() - 1;
 }
 
 void gol::computation() {
@@ -73,21 +111,24 @@ void gol::computation() {
     *
     * Consider: {0, 0} is a neighbour of {m, n} on a m × n sized grid
     */
-    std::vector<std::vector<char>> computation_board = board;
-    int neighbours;
-    bool cellAlive;
-    char result;
+    std::vector<std::vector<char>> ingrid = board;
 
+    #pragma omp parallel num_threads(threads) shared(ingrid, board)
     for (auto i = 0; i < generations; i++){
-        for (auto m= 0; m <= height; m++){
-            for(auto n=0; n<= width; n++){
-                neighbours = getAliveNeighbours(m, n);
-                cellAlive = board[m][n] == 'x';
+        #pragma omp for schedule(auto)
+        for (auto t= 0; t < height*width; t++){
+
+               int m = t / width;
+               int n = t % width;
+
+               int neigh = getAliveNeighbours(m, n);
+               bool cellAlive = board[m][n] == 'x';
+               char result;
 
                 //If cell is dead
                 if(!cellAlive){
                     //Rule 1
-                    if(neighbours == 3){
+                    if(neigh == 3){
                         result = 'x';
                     }else{
                         result = '.';
@@ -97,27 +138,28 @@ void gol::computation() {
                 //If cell is alive
                 if(cellAlive){
                     //Rule 2
-                    if(neighbours == 2 || neighbours == 3){
+                    if(neigh == 2 || neigh == 3){
                         result = 'x';
                     }else
                         //Rule 3 and 4
-                        if(neighbours < 2 || neighbours > 3){
+                    if(neigh < 2 || neigh > 3){
                         result = '.';
                     }
                 }
 
-                computation_board[m][n] = result;
+                ingrid[m][n] = result;
 
-            }
+
         }
-        //After all cells where visited store the computation_board as the new board
-        board = computation_board;
+        //After all cells where visited store the ingrid as the new board
+        board = ingrid;
     }
 }
 
 void gol::finalization() {
     outfile.open(save, std::ios::out);
-    outfile << board.size() << "," << board[0].size() << std::endl;
+    outfile << width << "," << height << std::endl;
+
     for (auto & i : board)
     {
         for (char j : i)
@@ -151,113 +193,20 @@ int gol::getReturnFlag() const {
 //Count alive neighbours, if the cell is at a border wrap around
 int32_t gol::getAliveNeighbours(int m, int n) {
     int result = 0;
-    //Neigbours most of the time
-    if(m > 0 && m < height && n> 0 && n < width) {
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[m + 1][n + 1] == 'x';
-        neighbours[2] = board[m + 1][n] == 'x';
-        neighbours[3] = board[m + 1][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[m - 1][n - 1] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][n + 1] == 'x';
-    }else
 
-    //Special case m = 0 / n> 0 && n<width Top Row
-    if(m == 0 && n> 0 && n<width){
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[m + 1][n + 1] == 'x';
-        neighbours[2] = board[m + 1][n] == 'x';
-        neighbours[3] = board[m + 1][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[height][n - 1] == 'x';
-        neighbours[6] = board[height][n] == 'x';
-        neighbours[7] = board[height][n + 1] == 'x';
-    }else
+    size_t up =    m == 0? height-1  : m-1;
+    size_t down =  m == height-1? 0  : m+1;
+    size_t left =  n == 0 ? width-1  : n-1;
+    size_t right = n == width-1 ? 0  : n+1;
 
-    //Special case m = height / n> 0 && n<width Bottom Row
-    if(m == height && n> 0 && n<width){
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[0][n + 1] == 'x';
-        neighbours[2] = board[0][n] == 'x';
-        neighbours[3] = board[0][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[m - 1][n - 1] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][n + 1] == 'x';
-    }else
-
-    //Special case m = m > 0 && m< height / n == 0 left Row
-    if(m > 0 && m< height && n == 0){
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[m + 1][n + 1] == 'x';
-        neighbours[2] = board[m + 1][n] == 'x';
-        neighbours[3] = board[m + 1][width] == 'x';
-        neighbours[4] = board[m][width] == 'x';
-        neighbours[5] = board[m - 1][width] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][n + 1] == 'x';
-    }else
-
-    //Special case m = m > 0 && m< height / n == width right Row
-    if(m > 0 && m< height && n == width){
-        neighbours[0] = board[m][0] == 'x';
-        neighbours[1] = board[m + 1][0] == 'x';
-        neighbours[2] = board[m + 1][n] == 'x';
-        neighbours[3] = board[m + 1][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[m - 1][n - 1] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][0] == 'x';
-    }else
-
-    //Super special case 0/0
-    if(m == 0 && n == 0){
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[m+1][n + 1] == 'x';
-        neighbours[2] = board[m+1][n] == 'x';
-        neighbours[3] = board[m+1][width] == 'x';
-        neighbours[4] = board[m][width] == 'x';
-        neighbours[5] = board[height][width] == 'x';
-        neighbours[6] = board[height][n] == 'x';
-        neighbours[7] = board[height][n + 1] == 'x';
-    }else
-
-    //Super special case 0/n
-    if(m == 0 && n == width){
-        neighbours[0] = board[m][0] == 'x';
-        neighbours[1] = board[m + 1][0] == 'x';
-        neighbours[2] = board[m + 1][n] == 'x';
-        neighbours[3] = board[m + 1][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[height][n - 1] == 'x';
-        neighbours[6] = board[height][n] == 'x';
-        neighbours[7] = board[height][0] == 'x';
-    }else
-
-    //Super special case left lower corner m/0
-    if(m == height && n == 0){
-        neighbours[0] = board[m][n + 1] == 'x';
-        neighbours[1] = board[0][n + 1] == 'x';
-        neighbours[2] = board[0][n] == 'x';
-        neighbours[3] = board[0][width] == 'x';
-        neighbours[4] = board[m][width] == 'x';
-        neighbours[5] = board[m - 1][width] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][n + 1] == 'x';
-    }else
-
-    //Super special case right lower corner m/n
-    if(m == height && n == width){
-        neighbours[0] = board[m][0] == 'x';
-        neighbours[1] = board[0][0] == 'x';
-        neighbours[2] = board[0][n] == 'x';
-        neighbours[3] = board[0][n - 1] == 'x';
-        neighbours[4] = board[m][n - 1] == 'x';
-        neighbours[5] = board[m - 1][n - 1] == 'x';
-        neighbours[6] = board[m - 1][n] == 'x';
-        neighbours[7] = board[m - 1][0] == 'x';
-    }
+    neighbours[0] = board [m][right] == 'x';
+    neighbours[1] = board [up][right] == 'x';
+    neighbours[2] = board [up][n] == 'x';
+    neighbours[3] = board [up][left] == 'x';
+    neighbours[4] = board [m][left] == 'x';
+    neighbours[5] = board [down][left] == 'x';
+    neighbours[6] = board [down][n] == 'x';
+    neighbours[7] = board [down][right] == 'x';
 
     for (bool neighbour : neighbours){
         if(neighbour)
@@ -266,4 +215,3 @@ int32_t gol::getAliveNeighbours(int m, int n) {
 
     return result;
 }
-
