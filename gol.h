@@ -24,8 +24,10 @@ class gol {
         std::ifstream infile;
         std::fstream outfile;
         std::vector<std::vector<char>> board;
+        int threads = 1;
+        bool parralel_flag;
 
-        //Privat functions
+    //Privat functions
         static void show_usage(const std::string& name);
         int32_t getAliveNeighbours(int m, int n);
 
