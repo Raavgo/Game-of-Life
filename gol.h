@@ -25,6 +25,7 @@ class gol {
         std::fstream outfile;
         std::vector<std::vector<char>> board;
         int threads = 1;
+        bool parralel_flag;
 
     //Privat functions
         static void show_usage(const std::string& name);
@@ -33,7 +34,6 @@ class gol {
     public:
         //Public functions needed for the main loop
         gol(int argc, char **argv);
-        ~gol();
         void setup();
         void computation();
         void finalization();

@@ -71,11 +71,28 @@ gol::gol(int argc, char **argv) {
                 std::cerr << "--generations option requires one argument." << std::endl;
                 return_flag = 1;
             }
-        }else if ((arg == "-m") || (arg == "--measure")) {
+        }else if ((arg == "-me") || (arg == "--measure")) {
             measure = true;
         }else if ((arg == "-t") || (arg == "--threads")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
                 threads =  atoi(argv[i+1]);
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "--destination option requires one argument." << std::endl;
+                return_flag = 1;
+            }
+        }else if ((arg == "-mo") || (arg == "--mode")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                std::string omp = "omp";
+                std::string seq = "seq";
+
+                if(omp.compare(argv[i+1]) == 0) {
+                    threads = atoi(argv[i + 1]);
+                    parralel_flag = true;
+                }
+
+                if(seq.compare(argv[i+1]) == 0){
+                    parralel_flag = false;
+                }
             } else { // Uh-oh, there was no argument to the destination option.
                 std::cerr << "--destination option requires one argument." << std::endl;
                 return_flag = 1;
@@ -113,7 +130,7 @@ void gol::computation() {
     */
     std::vector<std::vector<char>> ingrid = board;
 
-    #pragma omp parallel num_threads(threads) shared(ingrid, board)
+    #pragma omp parallel num_threads(threads) shared(ingrid, board) if (parralel_flag)
     for (auto i = 0; i < generations; i++){
         #pragma omp for schedule(auto)
         for (auto t= 0; t < height*width; t++){
@@ -148,8 +165,6 @@ void gol::computation() {
                 }
 
                 ingrid[m][n] = result;
-
-
         }
         //After all cells where visited store the ingrid as the new board
         board = ingrid;
@@ -176,10 +191,12 @@ void gol::show_usage(const std::string& name)
     std::cerr << "Usage: " << name
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
+              << "\t-mo, --mode Mode\tSpecify the mode to run possible options (seq, omp)\n"
+              << "\t-t, --threads Threads\tSpecify the amount of threads to run on\n"
               << "\t-l, --load FilePath\tSpecify the source path\n"
               << "\t-s, --save FilePath\tSpecify the destination path\n"
               << "\t-g, --generations Integer\tSpecify the generations for game of life (optional, default = 1)\n"
-              << "\t-m, --measure\tSpecify if execution should be timed (optional, default=false)\n"
+              << "\t-me, --measure\tSpecify if execution should be timed (optional, default=false)\n"
               << std::endl;
 }
 
